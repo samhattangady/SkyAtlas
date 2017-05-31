@@ -1,0 +1,4 @@
+g1: GeoJSON FeatureCollection
+1 point
+1 line: 3 coords
+1 polygon: 6 coords (1st == 6th)
