@@ -4,7 +4,8 @@ import unittest
 import skyatlas
 from skyatlas.classes import SkyAtlas
 
-class TestStringMethods(unittest.TestCase):
+
+class TestLoaders(unittest.TestCase):
 
     def test_load_geojson_feature_collection(self):
         feature_collection_path = 'skyatlas/tests/data/g1.geojson'

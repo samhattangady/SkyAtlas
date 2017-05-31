@@ -83,17 +83,27 @@ class SkyList(list):
 
 class SkyAtlas(object):
     def __init__(self):
-        self.points = SkyList()
-        self.lines = SkyList()
-        self.polygons = SkyList()
-
-    @property
-    def features(self):
-        return SkyList(self.points + self.lines + self.polygons)
+        self._features = SkyList()
 
     def __str__(self):
         return '<SkyAtlas object with {} points, {} lines and {} polygons>'.format(
             len(self.points), len(self.lines), len(self.polygons))
+
+    @property
+    def features(self):
+        return self._features
+
+    @property
+    def points(self):
+        return SkyList([feature for feature in self.features if isinstance(feature, SkyPoint)])
+
+    @property
+    def lines(self):
+        return SkyList([feature for feature in self.features if isinstance(feature, SkyLine)])
+
+    @property
+    def polygons(self):
+        return SkyList([feature for feature in self.features if isinstance(feature, SkyPolygon)])
 
     def load_geojson(self, geojson_data):
         for feature in geojson_data['features']:
@@ -107,24 +117,27 @@ class SkyAtlas(object):
 
     def add_point(self, point):
         if isinstance(point, SkyPoint):
-            self.points.append(point)
+            self._features.append(point)
         else:
-            # TODO Throw exception?
-            pass
+            error_message = 'point was of type {t}.\n'\
+            'Should be of type SkyPoint'.format(t=type(point))
+            raise ValueError(error_message)
 
     def add_line(self, line):
         if isinstance(line, SkyLine):
-            self.lines.append(line)
+            self._features.append(line)
         else:
-            # TODO Throw exception?
-            pass
+            error_message = 'line was of type {t}.\n'\
+            'Should be of type SkyLine'.format(t=type(line))
+            raise ValueError(error_message)
 
     def add_polygon(self, polygon):
         if isinstance(polygon, SkyPolygon):
-            self.polygons.append(polygon)
+            self._features.append(polygon)
         else:
-            # TODO Throw exception?
-            pass
+            error_message = 'polygon was of type {t}.\n'\
+            'Should be of type SkyPolygon'.format(t=type(polygon))
+            raise ValueError(error_message)
 
     def add_feature(self, feature):
         if isinstance(feature, SkyPoint):
@@ -134,17 +147,18 @@ class SkyAtlas(object):
         elif isinstance(feature, SkyPolygon):
             self.add_polygon(feature)
         else:
-            # TODO Throw exception?
-            pass
+            error_message = 'feature was of type {t}.\n'\
+            'Should be SkyPoint, SkyLine or SkyPolygon'.format(t=type(feature))
+            raise ValueError(error_message)
 
     def add_points(self, atlas):
-        self.points.extend(atlas.points)
+        self._features.extend(atlas.points)
 
     def add_lines(self, atlas):
-        self.lines.extend(atlas.lines)
+        self._features.extend(atlas.lines)
 
     def add_polygons(self, atlas):
-        self.polygons.extend(atlas.polygons)
+        self._features.extend(atlas.polygons)
 
     def add_atlas(self, atlas):
         self.add_points(atlas)
@@ -157,23 +171,17 @@ class SkyAtlas(object):
         return json.dumps(geojson)
 
     def _add_geojson_point(self, feature):
-        self.points.append(SkyPoint()._load_geojson(feature))
+        self._features.append(SkyPoint()._load_geojson(feature))
 
     def _add_geojson_line(self, feature):
-        self.lines.append(SkyLine()._load_geojson(feature))
+        self._features.append(SkyLine()._load_geojson(feature))
 
     def _add_geojson_polygon(self, feature):
-        self.polygons.append(SkyPolygon()._load_geojson(feature))
+        self._features.append(SkyPolygon()._load_geojson(feature))
 
     def _get_empty_geojson(self):
         return {
-            "type": "FeatureCollection", 
-            "crs": {
-                "type": "name", 
-                "properties": {
-                    "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
-                }
-            }, 
+            "type": "FeatureCollection",
             "features": []
         }
 
