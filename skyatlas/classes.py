@@ -1,5 +1,10 @@
 import json
 
+from collections import namedtuple
+
+
+class SkyCoords(namedtuple('SkyCoords', ['longitude', 'latitude', 'altitude'])):
+    pass
 
 class SkyGeo(dict):
     def _load_geojson(self, feature):
@@ -152,15 +157,31 @@ class SkyAtlas(object):
             raise ValueError(error_message)
 
     def add_points(self, atlas):
+        if not isinstance(atlas, SkyAtlas):
+            error_message = 'atlas was of type {t}.\n'\
+            'Should be of type SkyAtlas'.format(t=type(atlas))
+            raise ValueError(error_message)
         self._features.extend(atlas.points)
 
     def add_lines(self, atlas):
+        if not isinstance(atlas, SkyAtlas):
+            error_message = 'atlas was of type {t}.\n'\
+            'Should be of type SkyAtlas'.format(t=type(atlas))
+            raise ValueError(error_message)
         self._features.extend(atlas.lines)
 
     def add_polygons(self, atlas):
+        if not isinstance(atlas, SkyAtlas):
+            error_message = 'atlas was of type {t}.\n'\
+            'Should be of type SkyAtlas'.format(t=type(atlas))
+            raise ValueError(error_message)
         self._features.extend(atlas.polygons)
 
     def add_atlas(self, atlas):
+        if not isinstance(atlas, SkyAtlas):
+            error_message = 'atlas was of type {t}.\n'\
+            'Should be of type SkyAtlas'.format(t=type(atlas))
+            raise ValueError(error_message)
         self.add_points(atlas)
         self.add_lines(atlas)
         self.add_polygons(atlas)
