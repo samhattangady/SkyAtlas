@@ -69,4 +69,9 @@ Finally, it is possible to convert the atlas object to a GeoJSON string to write
     with open('points.geojson', 'w') as atlas_out:
         atlas_out.write(double_points.to_geojson())
         
-    
+
+## To be implemented
+
+ - KML + KMZ
+ - Shapefiles
+ - Input verification
