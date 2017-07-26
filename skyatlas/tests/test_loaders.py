@@ -11,7 +11,6 @@ class TestLoaders(unittest.TestCase):
         feature_collection_path = 'skyatlas/tests/data/g1.geojson'
 
         atlas = skyatlas.load_geojson(feature_collection_path)
-
         self.assertIsInstance(atlas, SkyAtlas, 'load_geojson did not return SkyAtlas object')
         self.assertEqual(len(atlas.points), 1, 'points were loaded incorrectly')
         self.assertEqual(len(atlas.features), 3, 'features were loaded incorrectly')
@@ -22,7 +21,6 @@ class TestLoaders(unittest.TestCase):
             geojson_string = geojson_file.read()
 
         atlas = skyatlas.load_geojson(geojson_string)
-
         self.assertIsInstance(atlas, SkyAtlas, 'load_geojson did not return SkyAtlas object')
 
     def test_load_from_dict(self):
@@ -31,5 +29,4 @@ class TestLoaders(unittest.TestCase):
             geojson_dict = json.load(geojson_file)
 
         atlas = skyatlas.load_geojson(geojson_dict)
-
         self.assertIsInstance(atlas, SkyAtlas, 'load_geojson did not return SkyAtlas object')

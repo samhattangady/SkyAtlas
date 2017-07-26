@@ -167,60 +167,25 @@ class SkyAtlas(object):
             raise ValueError(error_message)
 
     def add_feature(self, feature):
-        if isinstance(feature, SkyPoint):
-            self.add_point(feature)
-        elif isinstance(feature, SkyLine):
-            self.add_line(feature)
-        elif isinstance(feature, SkyPolygon):
-            self.add_polygon(feature)
+        if isinstance(feature, (SkyPoint, SkyLine, SkyPolygon)):
+            self._features.append(feature)
         else:
             error_message = 'feature was of type {t}.\n'\
             'Should be SkyPoint, SkyLine or SkyPolygon'.format(t=type(feature))
             raise ValueError(error_message)
 
-    def add_points(self, atlas):
-        if not isinstance(atlas, SkyAtlas):
-            error_message = 'atlas was of type {t}.\n'\
-            'Should be of type SkyAtlas'.format(t=type(atlas))
-            raise ValueError(error_message)
-        self._features.extend(atlas.points)
-
-    def add_lines(self, atlas):
-        if not isinstance(atlas, SkyAtlas):
-            error_message = 'atlas was of type {t}.\n'\
-            'Should be of type SkyAtlas'.format(t=type(atlas))
-            raise ValueError(error_message)
-        self._features.extend(atlas.lines)
-
-    def add_polygons(self, atlas):
-        if not isinstance(atlas, SkyAtlas):
-            error_message = 'atlas was of type {t}.\n'\
-            'Should be of type SkyAtlas'.format(t=type(atlas))
-            raise ValueError(error_message)
-        self._features.extend(atlas.polygons)
-
-    def add_atlas(self, atlas):
-        if not isinstance(atlas, SkyAtlas):
-            error_message = 'atlas was of type {t}.\n'\
-            'Should be of type SkyAtlas'.format(t=type(atlas))
-            raise ValueError(error_message)
-        # Without this, adding an atlas to itself becomes an infinite loop
-        features = list(atlas.features)
-        for feature in features:
-            self.add_feature(feature)
-
     def new_point(self, coords, properties={}):
         # TODO add tests
         self._verify_coords(coords)
         point = SkyPoint()._load_from_coords(coords, properties)
-        self.add_point(point)
+        self.add_feature(point)
 
     def new_line(self, coords, properties={}):
         # TODO add tests
         for coord in coords:
             self._verify_coords(coord)
         line = SkyLine()._load_from_coords(coords, properties)
-        self.add_line(line)
+        self.add_feature(line)
 
     def new_polygon(self, coords, properties={}):
         # FIXME Geojson has a slightly unintuitive way of storing polygons
@@ -231,7 +196,7 @@ class SkyAtlas(object):
         # TODO add some verification?
         # TODO add tests
         polygon = SkyPolygon()._load_from_coords(coords, properties)
-        self.add_polygon(polygon)
+        self.add_feature(polygon)
 
     def to_geojson(self):
         geojson = self._get_empty_geojson()
