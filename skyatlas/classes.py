@@ -7,9 +7,17 @@ class SkyCoords(namedtuple('SkyCoords', ['longitude', 'latitude', 'altitude'])):
     pass
 
 class SkyGeo(dict):
+    def __str__(self):
+        return self.__type__ + ': ' + super().__str__()
+
     def _load_geojson(self, feature):
         self['coordinates'] = feature['geometry']['coordinates']
         self['properties'] = feature['properties']
+        return self
+
+    def _load_from_coords(self, coords, properties):
+        self['coordinates'] = coords
+        self['properties'] = properties
         return self
 
     def _to_geojson(self):
@@ -32,6 +40,12 @@ class SkyPoint(SkyGeo):
             self['coordinates'].append(0)
         return self
 
+    def _load_from_coords(self, coords, properties):
+        super()._load_from_coords(coords, properties)
+        if len(self['coordinates']) == 2:
+            self['coordinates'].append(0)
+        return self
+
     def coords(self, z=True):
         # Dict to find end index based on z value
         end = {True: 3, False: 2}[z]
@@ -48,6 +62,10 @@ class SkyLine(SkyGeo):
                 coord.append(0)
         return self
 
+    def _load_from_coords(self, coords, properties):
+        super()._load_from_coords(coords, properties)
+        return self
+
     def coords(self, z=True):
         end = {True: 3, False: 2}[z]
         return [tuple(coord[:end]) for coord in self['coordinates']]
@@ -62,6 +80,10 @@ class SkyPolygon(SkyGeo):
             for coord in poly:
                 if len(coord) == 2:
                     coord.append(0)
+        return self
+
+    def _load_from_coords(self, coords, properties):
+        super()._load_from_coords(coords, properties)
         return self
 
     def _outer_coords(self, z):
@@ -182,14 +204,43 @@ class SkyAtlas(object):
             error_message = 'atlas was of type {t}.\n'\
             'Should be of type SkyAtlas'.format(t=type(atlas))
             raise ValueError(error_message)
-        self.add_points(atlas)
-        self.add_lines(atlas)
-        self.add_polygons(atlas)
+        # Without this, adding an atlas to itself becomes an infinite loop
+        features = list(atlas.features)
+        for feature in features:
+            self.add_feature(feature)
+
+    def new_point(self, coords, properties={}):
+        # TODO add tests
+        self._verify_coords(coords)
+        point = SkyPoint()._load_from_coords(coords, properties)
+        self.add_point(point)
+
+    def new_line(self, coords, properties={}):
+        # TODO add tests
+        for coord in coords:
+            self._verify_coords(coord)
+        line = SkyLine()._load_from_coords(coords, properties)
+        self.add_line(line)
+
+    def new_polygon(self, coords, properties={}):
+        # FIXME Geojson has a slightly unintuitive way of storing polygons
+        # It stores lists of coords. The first one is the outermost ring
+        # All subsequent elements in that list are the holes in the polygon
+        # So we will have to see what format user is giving it in, and then
+        # adapt accordingly...
+        # TODO add some verification?
+        # TODO add tests
+        polygon = SkyPolygon()._load_from_coords(coords, properties)
+        self.add_polygon(polygon)
 
     def to_geojson(self):
         geojson = self._get_empty_geojson()
         geojson['features'].extend(self.features._to_geojson())
         return json.dumps(geojson)
+
+    def write_geojson(self, path):
+        with open(path, 'w') as out_file:
+            out_file.write(self.to_geojson())
 
     def _add_geojson_point(self, feature):
         self._features.append(SkyPoint()._load_geojson(feature))
@@ -199,6 +250,15 @@ class SkyAtlas(object):
 
     def _add_geojson_polygon(self, feature):
         self._features.append(SkyPolygon()._load_geojson(feature))
+
+    def _verify_coords(self, coords):
+        # TODO add some latlong verification as well?
+        if not 2 <= len(coords) <= 3:
+            raise ValueError('coords must be list containing lat, lng(, alt)')
+        for coord in coords:
+            if not isinstance(coord, (float, int)):
+                raise TypeError('coordinates must be of type float or int')
+        return
 
     def _get_empty_geojson(self):
         return {
